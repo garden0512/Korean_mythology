@@ -9,7 +9,7 @@ public class Monster_AI : MonoBehaviour
     public float speed;
     public float detectionRadius = 5f; // 감지 범위
     public Rigidbody2D target;
-    bool isLive = true;
+    public bool isLive = true;
     Rigidbody2D rigid;
     SpriteRenderer spriter;
     private Vector2 randomDirection;
@@ -17,6 +17,7 @@ public class Monster_AI : MonoBehaviour
     private float changeDirectionTimer;
     public float maxHealth = 1000f;
     public float health;
+    public bool isPlayerInRange;
 
     void Awake()
     {
@@ -43,14 +44,14 @@ public class Monster_AI : MonoBehaviour
 
         if (distanceToPlayer < detectionRadius)
         {
-            // 플레이어 추적
             Vector2 dirVec = target.position - rigid.position;
             Vector2 nextVec = dirVec.normalized * speed * Time.fixedDeltaTime;
             rigid.MovePosition(rigid.position + nextVec);
+            isPlayerInRange = true;
         }
         else
         {
-            // 랜덤한 방향으로 이동
+            isPlayerInRange = false;
             changeDirectionTimer -= Time.fixedDeltaTime;
             if (changeDirectionTimer <= 0)
             {
@@ -91,7 +92,6 @@ public class Monster_AI : MonoBehaviour
     void Die()
     {
         isLive = false;
-        // 죽는 로직 추가 (예: 애니메이션, 오브젝트 파괴 등)
         Debug.Log("Monster died");
         Destroy(gameObject);
     }
