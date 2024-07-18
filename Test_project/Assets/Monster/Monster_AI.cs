@@ -5,20 +5,42 @@ using UnityEngine;
 public class Monster_AI : MonoBehaviour
 {
     public static Monster_AI instance;
-
+    [Tooltip("몬스터의 움직임에 관한 변수들입니다.")]
+    [Header("Monster Move Info")]
     public float speed;
+    [Tooltip("몬스터의 플레이어 감지에 관련된 변수들입니다.")]
+    [Header("Recognition Info")]
     public float detectionRadius = 5f; // 감지 범위
     public Rigidbody2D target;
-    public bool isLive = true;
+    public bool isPlayerInRange
+    {
+        get => _isPlayerInRange;
+        set => _isPlayerInRange = value;
+    }
+    [Tooltip("몬스터의 체력에 대한 변수들입니다.")]
+    [Header("Monster HP Info")]
+    public float maxHealth = 1000f;
+    private float _health;
+    public float health
+    {
+        get => _health;
+        set => _health = value;
+    }
+    private bool isLive = true;
+    public bool IsLive
+    {
+        get => isLive;
+        set => isLive = value;
+    }
     Rigidbody2D rigid;
     SpriteRenderer spriter;
     private Vector2 randomDirection;
     private float changeDirectionTime = 2f;
     private float changeDirectionTimer;
-    public float maxHealth = 1000f;
-    public float health;
-    public bool isPlayerInRange;
-
+    private bool _isPlayerInRange;
+    private float attackInterval = 1f;
+    private float attackTimer;
+    
     void Awake()
     {
         if (instance == null)
@@ -32,7 +54,7 @@ public class Monster_AI : MonoBehaviour
         rigid = GetComponent<Rigidbody2D>();
         spriter = GetComponent<SpriteRenderer>();
         SetRandomDirection();
-        health = maxHealth;
+        _health = maxHealth;
     }
 
     void FixedUpdate()
@@ -44,14 +66,25 @@ public class Monster_AI : MonoBehaviour
 
         if (distanceToPlayer < detectionRadius)
         {
-            Vector2 dirVec = target.position - rigid.position;
-            Vector2 nextVec = dirVec.normalized * speed * Time.fixedDeltaTime;
-            rigid.MovePosition(rigid.position + nextVec);
-            isPlayerInRange = true;
+            if (distanceToPlayer <= 5f)
+            {
+                AttackPlayer();
+                rigid.velocity = Vector2.zero;
+                return;
+            }
+            else
+            {
+                Vector2 dirVec = target.position - rigid.position;
+                Vector2 nextVec = dirVec.normalized * speed * Time.fixedDeltaTime;
+                rigid.MovePosition(rigid.position + nextVec);
+            }
+            _isPlayerInRange = true;
+            Debug.Log("isPlayerInRange = true");
         }
         else
         {
-            isPlayerInRange = false;
+            _isPlayerInRange = false;
+            Debug.Log("isPlayerInRange = false");
             changeDirectionTimer -= Time.fixedDeltaTime;
             if (changeDirectionTimer <= 0)
             {
@@ -77,13 +110,28 @@ public class Monster_AI : MonoBehaviour
         changeDirectionTimer = changeDirectionTime;
     }
 
+    void AttackPlayer()
+    {
+        attackTimer -= Time.deltaTime;
+        if (attackTimer <= 0)
+        {
+            attackTimer = attackInterval;
+            Player_Health playerHealth = target.GetComponent<Player_Health>();
+            if (playerHealth != null)
+            {
+                playerHealth.TakeDamage(10f);
+            }
+        }
+    }
+
+
     public void TakeDamage(float damage)
     {
         if (!isLive)
             return;
 
-        health -= damage;
-        if (health <= 0)
+        _health -= damage;
+        if (_health <= 0)
         {
             Die();
         }
