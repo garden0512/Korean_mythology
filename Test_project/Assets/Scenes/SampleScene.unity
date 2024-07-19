@@ -473,7 +473,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6015ef1f41e94d04080bddec0edee332, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  type: 1
 --- !u!114 &397768371
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1404,10 +1404,7 @@ MonoBehaviour:
   speed: 2.5
   detectionRadius: 15
   target: {fileID: 241214176}
-  isLive: 1
   maxHealth: 1000
-  health: 0
-  isPlayerInRange: 0
 --- !u!1 &1769018969
 GameObject:
   m_ObjectHideFlags: 0

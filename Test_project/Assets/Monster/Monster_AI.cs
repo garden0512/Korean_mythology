@@ -12,6 +12,7 @@ public class Monster_AI : MonoBehaviour
     [Header("Recognition Info")]
     public float detectionRadius = 5f; // 감지 범위
     public Rigidbody2D target;
+    private bool _isPlayerInRange;
     public bool isPlayerInRange
     {
         get => _isPlayerInRange;
@@ -37,9 +38,9 @@ public class Monster_AI : MonoBehaviour
     private Vector2 randomDirection;
     private float changeDirectionTime = 2f;
     private float changeDirectionTimer;
-    private bool _isPlayerInRange;
-    private float attackInterval = 1f;
+    private float attackInterval = 3f;
     private float attackTimer;
+    private bool isAttacking = false;
     
     void Awake()
     {
@@ -59,7 +60,7 @@ public class Monster_AI : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (!isLive)
+        if (!isLive || isAttacking)
             return;
 
         float distanceToPlayer = Vector2.Distance(rigid.position, target.position);
@@ -99,7 +100,7 @@ public class Monster_AI : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!isLive)
+        if (!isLive || isAttacking)
             return;
         spriter.flipX = target.position.x < rigid.position.x;
     }
@@ -112,16 +113,32 @@ public class Monster_AI : MonoBehaviour
 
     void AttackPlayer()
     {
+        if(isAttacking)
+            return;
+
         attackTimer -= Time.deltaTime;
         if (attackTimer <= 0)
         {
-            attackTimer = attackInterval;
-            Player_Health playerHealth = target.GetComponent<Player_Health>();
-            if (playerHealth != null)
-            {
-                playerHealth.TakeDamage(10f);
-            }
+            StartCoroutine(PerformAttack());
         }
+    }
+
+    IEnumerator PerformAttack()
+    {
+        isAttacking = true;
+        attackTimer = attackInterval;
+
+        yield return new WaitForSeconds(0.5f);
+
+        Player_Health playerHealth = target.GetComponent<Player_Health>();
+        if(playerHealth != null)
+        {
+            playerHealth.TakeDamage(10f);
+        }
+
+        yield return new WaitForSeconds(0.5f);
+
+        isAttacking = false;
     }
 
 
