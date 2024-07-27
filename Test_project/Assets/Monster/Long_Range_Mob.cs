@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class Monster_AI : MonoBehaviour
+public class Long_Range_Mob : MonoBehaviour
 {
-    public static Monster_AI instance;
+    public static Long_Range_Mob instance;
     [Tooltip("몬스터의 움직임에 관한 변수들입니다.")]
     [Header("Monster Move Info")]
     public float speed;
@@ -33,6 +34,10 @@ public class Monster_AI : MonoBehaviour
         get => isLive;
         set => isLive = value;
     }
+    [Header("Attack Indicator")]
+    public Image attackIndicator; // UI Image component for the filling glass
+    public float attackChargeTime = 2f; // Time it takes to fully charge the attack
+
     Rigidbody2D rigid;
     SpriteRenderer spriter;
     private Vector2 randomDirection;
@@ -42,7 +47,8 @@ public class Monster_AI : MonoBehaviour
     private float attackTimer;
     private bool isAttacking = false;
     private Vector2 initialAttackPosition;
-    
+    private float attackChargeTimer;
+
     void Awake()
     {
         if (instance == null)
@@ -57,6 +63,7 @@ public class Monster_AI : MonoBehaviour
         spriter = GetComponent<SpriteRenderer>();
         SetRandomDirection();
         _health = maxHealth;
+        attackChargeTimer = attackChargeTime;
     }
 
     void FixedUpdate()
@@ -114,11 +121,13 @@ public class Monster_AI : MonoBehaviour
 
     void AttackPlayer()
     {
-        if(isAttacking)
+        if (isAttacking)
             return;
 
-        attackTimer -= Time.deltaTime;
-        if (attackTimer <= 0)
+        attackChargeTimer -= Time.deltaTime;
+        attackIndicator.fillAmount = (attackChargeTime - attackChargeTimer) / attackChargeTime;
+
+        if (attackChargeTimer <= 0)
         {
             StartCoroutine(PerformAttack());
         }
@@ -127,22 +136,33 @@ public class Monster_AI : MonoBehaviour
     IEnumerator PerformAttack()
     {
         isAttacking = true;
+        attackChargeTimer = attackChargeTime;
+        attackIndicator.fillAmount = 0;
         attackTimer = attackInterval;
         initialAttackPosition = rigid.position;
 
-        yield return new WaitForSeconds(0.5f);
-
+        // Perform the attack
         Player_Health playerHealth = target.GetComponent<Player_Health>();
         if(playerHealth != null)
         {
             playerHealth.TakeDamage(10f);
         }
 
+        // Wait for a brief moment after attacking
         yield return new WaitForSeconds(0.5f);
 
+        // Reset attack state
         isAttacking = false;
-    }
+        attackChargeTimer = attackChargeTime;
 
+        // Resume charging attack
+        while (attackChargeTimer > 0)
+        {
+            attackChargeTimer -= Time.deltaTime;
+            attackIndicator.fillAmount = (attackChargeTime - attackChargeTimer) / attackChargeTime;
+            yield return null;
+        }
+    }
 
     public void TakeDamage(float damage)
     {
